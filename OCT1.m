@@ -6,16 +6,12 @@ OCT_image = rgb2gray(I);
 figure('Name','Original Image');
 imshow(OCT_image);
 title('Original Image');
-imwrite(OCT_image,'Tape/oct_image.jpg')
-
 %%
 % plotting the pdf of OCT image
 [counts,binLocations] = imhist(OCT_image);
 figure('Name','PDF of OCT image');
 imhist(OCT_image);
 title('PDF of Original Image');
-imwrite(imhist(OCT_image),'Tape/pdf_oct_image.jpg')
-
 %%
 %speckle detection using thresholding
 threshold = 50; 
@@ -23,7 +19,6 @@ speckle_mask = OCT_image < threshold;
 figure('Name','Speckle');
 imshow(speckle_mask);
 title('Speckle');
-imwrite(speckle_mask,'Tape/speckles.jpg')
 %%
 %speckle correction median filter
 kernel_size = 5;
@@ -35,8 +30,24 @@ title('Image after Speckle correction');
 figure('Name','Original vs corrected image');
 imshowpair(OCT_image,corrected_image, 'montage');
 title('Original (Left) vs Speckle corrected (Right) image');
-imwrite(corrected_image,'Tape/speckles_corrected_median.jpg')
-imwrite(cat(1,OCT_image,corrected_image),'Tape/speckles_corrected_median_montage.jpg')
+
+%%
+img_gamma= imadjust(corrected_image,[],[],1.2);
+figure('Name','Image after applying gamma correction');
+imshow(img_gamma);
+title('Image after speckle correction');
+
+speckle = OCT_image - img_gamma;
+figure('Name','Speckle Detected');
+imshow(speckle);
+title('Speckle Detected');
+
+%%
+% plotting the pdf of OCT image
+[counts,binLocations] = imhist(img_gamma);
+figure('Name','PDF of Corrected image');
+imhist(img_gamma);
+title('PDF of Corrected Image');
 %%
 % Speckle correction using gaussian filter
 sigma = 0.9;
@@ -44,31 +55,38 @@ I_gaussian_3_3=imgaussfilt(OCT_image,sigma,'FilterSize',[3 3]);
 I_gaussian_9_9=imgaussfilt(OCT_image,sigma,'FilterSize',[9 9]);
 I_gaussian_27_27=imgaussfilt(OCT_image,sigma,'FilterSize',[27 27]);
 
+figure('Name','Image after Speckle correction');
+imshow(I_gaussian_3_3);
+title('Image after Speckle correction');
+
+figure('Name','Image after Speckle correction');
+imshow(I_gaussian_9_9);
+title('Image after Speckle correction');
+
+figure('Name','Image after Speckle correction');
+imshow(I_gaussian_27_27);
+title('Image after Speckle correction');
+%%
 
 figure('Name','Original vs corrected image');
 imshowpair(OCT_image,I_gaussian_3_3, 'montage');
 title('Original (Left) vs Speckle corrected (Right) image');
-imwrite(I_gaussian_3_3,'Tape/speckles_corrected_gaussian3.jpg')
 
 figure('Name','Original vs corrected image');
 imshowpair(OCT_image,I_gaussian_9_9, 'montage');
 title('Original (Left) vs Speckle corrected (Right) image');
-imwrite(I_gaussian_9_9,'Tape/speckles_corrected_gaussian9.jpg')
 
 figure('Name','Original vs corrected image');
 imshowpair(OCT_image,I_gaussian_27_27, 'montage');
 title('Original (Left) vs Speckle corrected (Right) image');
-imwrite(I_gaussian_27_27,'Tape/speckles_corrected_gaussian27.jpg')
 
 figure('Name','Gaussian filter')
 montage(cat(2,I_gaussian_3_3,I_gaussian_9_9,I_gaussian_27_27));
 title('Left: 3×3 Gaussian Filter, Middle: 9×9 Gaussian Filter,Right: 27×27 Gaussian Filter');
-imwrite(cat(2,I_gaussian_3_3,I_gaussian_9_9,I_gaussian_27_27),'Tape/speckles_corrected_gaussian_montage.jpg')
-
 %%  Segmentation - method 1
 % K-means clustering based image segmentation for corrected image
-[L,Centers] = imsegkmeans(corrected_image,3);
-segmented_image = labeloverlay(corrected_image,L);
+[L,Centers] = imsegkmeans(img_gamma,3);
+segmented_image = labeloverlay(img_gamma,L);
 figure('Name','Segmented Image');
 imshow(segmented_image);
 title("Segmented Image");
@@ -91,23 +109,7 @@ end
 
 % thickness values
 disp('Thickness values for each layer(in pixels):');
-disp(thickness_values);
-%%
-% layer segmentation
-edges = edge(corrected_image, 'Canny');
-se = strel('disk', 3);
-dilated_edges = imdilate(edges, se);
-close_edges = imclose(dilated_edges, se);
-segmented_layers = imfill(close_edges, 'holes');
-% segmented_layers = close_edges;
-figure('Name','Image after Segmentation');
-imshow(segmented_layers);
-title('Image after Segmentation');
-
-figure('Name','Original vs Segmented image');
-imshowpair(OCT_image,segmented_layers, 'montage');
-title('Original (Left) vs Segmented (Right) image');
- 
+disp(thickness_values); 
 %% Segmentation - method 2
 % Apply morphological opening to enhance bright structures
 se_opening = strel('disk',3);
@@ -123,6 +125,10 @@ morph_gradient = imsubtract(closed_image, opened_image);
 % Threshold the gradient image to obtain a binary segmentation
 threshold = graythresh(morph_gradient);
 binary_segmentation = imbinarize(morph_gradient, threshold);
+
+figure('Name','Segmented Image');
+imshow(binary_segmentation);
+title("Segmented Image");
 
 figure('Name','Original vs Segmented image');
 imshowpair(OCT_image,binary_segmentation, 'montage');
@@ -151,7 +157,7 @@ title('Phase spectrum of original image')
 %%
 % frequency distribution analysis of corrected image
 % Performing 2D Fourier Transform
-fft_image = fft2(double(corrected_image));
+fft_image = fft2(double(img_gamma));
 
 % Shifting zero-frequency components to the center
 fft_image_shifted = fftshift(fft_image);

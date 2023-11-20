@@ -1,11 +1,17 @@
 % Reading the image
 I = imread("OCT/Default_0001_Mode2D.jpg");
+I2 = imread("OCT/Default_0014_Mode2D.jpg");
 
 % Converting image to grayscale
 OCT_image = rgb2gray(I);
+OCT_image2 = rgb2gray(I2);
 figure('Name','Original Image');
 imshow(OCT_image);
 title('Original Image');
+
+imshow(OCT_image2);
+title("Original Image 2");
+
 imwrite(OCT_image,'Tape/oct_image.jpg')
 
 %%
@@ -14,6 +20,9 @@ imwrite(OCT_image,'Tape/oct_image.jpg')
 figure('Name','PDF of OCT image');
 imhist(OCT_image);
 title('PDF of Original Image');
+
+imhist(OCT_image2);
+title('PDF of Original Image2');
 imwrite(imhist(OCT_image),'Tape/pdf_oct_image.jpg')
 
 %%
@@ -64,6 +73,38 @@ figure('Name','Gaussian filter')
 montage(cat(2,I_gaussian_3_3,I_gaussian_9_9,I_gaussian_27_27));
 title('Left: 3×3 Gaussian Filter, Middle: 9×9 Gaussian Filter,Right: 27×27 Gaussian Filter');
 imwrite(cat(2,I_gaussian_3_3,I_gaussian_9_9,I_gaussian_27_27),'Tape/speckles_corrected_gaussian_montage.jpg')
+
+%%
+%speckle correction of Image2
+% first we apply median filter
+img_med= medfilt2(OCT_image2,[5 5]);
+figure('Name','Image after applying median filter');
+imshow(img_med);
+title('Image after applying median filter');
+
+% then we apply wiener filter on the above image
+img_weiner = wiener2(img_med,[11 11]);
+figure('Name','Image after applying wiener filter');
+imshow(img_weiner);
+title('Image after applying wiener filter');
+
+% then applying bilateral filter on the above image
+img_bilat= imbilatfilt(img_weiner,9);
+figure('Name','Image after applying bilateral filter');
+imshow(img_weiner);
+title('Image after applying bilateral filter');
+
+% then applying gamma correction on the above image
+img_gama= imadjust(img_bilat,[],[],1.3);
+figure('Name','Image after applying gamma correction');
+imshow(img_gama);
+title('Image after applying gamma correction');
+
+%% marking speckle for the image2
+% subtracting the cleaned image from the original gives the speckle
+img_speck = (OCT_image2 - img_gama); 
+imshow(img_speck)
+title('Speckle in the original Image')
 
 %%  Segmentation - method 1
 % K-means clustering based image segmentation for corrected image

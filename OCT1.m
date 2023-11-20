@@ -189,6 +189,46 @@ phase_spectrum = angle(fft_image_shifted);
 figure('Name','Phase'); imagesc(phase_spectrum);
 title('Phase spectrum of original image')
 
+%% Frequency Distribution Analysis of image2
+% frequency distribution analysis of original image
+% Performing 2D Fourier Transform
+fft_image = fft2(double(OCT_image2));
+
+% Shifting zero-frequency components to the center
+fft_image_shifted = fftshift(fft_image);
+
+% magnitude spectrum (log scale for visualization)
+magnitude_spectrum = log(abs(fft_image_shifted) + 1);
+
+figure('Name','Magnitude'); 
+imagesc(magnitude_spectrum);
+title('Magnitude spectrum of original image');
+
+%phase spectrum
+phase_spectrum = angle(fft_image_shifted);
+figure('Name','Phase'); imagesc(phase_spectrum);
+title('Phase spectrum of original image')
+
+%%
+% frequency distribution analysis of corrected image
+% Performing 2D Fourier Transform
+fft_image = fft2(double(img_gama));
+
+% Shifting zero-frequency components to the center
+fft_image_shifted = fftshift(fft_image);
+
+% magnitude spectrum (log scale for visualization)
+magnitude_spectrum = log(abs(fft_image_shifted) + 1);
+
+figure('Name','Magnitude'); 
+imagesc(magnitude_spectrum);
+title('Magnitude spectrum of corrected image');
+
+%phase spectrum
+phase_spectrum = angle(fft_image_shifted);
+figure('Name','Phase'); imagesc(phase_spectrum);
+title('Phase spectrum of corrected image')
+
 %%
 % frequency distribution analysis of corrected image
 % Performing 2D Fourier Transform
